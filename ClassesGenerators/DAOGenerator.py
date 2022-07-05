@@ -2,6 +2,7 @@ import os
 
 from FilesHandlers import IndentJavaFile
 import Parser as p
+from ClassesGenerators import GenericGenerator as gg
 
 dictForTypesConversion = {'long': 'int'}
 
@@ -54,56 +55,156 @@ public class <class_name>DAO extends DAO<PK, <class_name>DTO, <class_name>> {
 }"""
 
 
-def generate_dao_class_given_class_name_and_class_fields(class_name, class_fields):
+def generate_dao_class_given_class_name_and_class_fields(class_name, class_fields, fk_class_fields=""):
     """
         Generates a DAO class given a class name and a list of fields.
         :param class_name: name of the class
         :param class_fields: class fields
+        :param fk_class_fields: foreign key fields
         :return: DAO class
         """
     # packages and imports for the DAO class.
-    packages = """package DataAccess.DAOs;
-import DataAccess.DTOs.<class_name>DTO;
-import DataAccess.IdentityMap.IM;
-import DataAccess.PrimaryKeys.PK;
-import Logic.<class_name>;
-import java.util.List;""".replace("<class_name>", class_name)
+    packages = define_dao_imports(class_name, class_fields)
     # class header. (extends DAO<PK, <class_name>DTO, <class_name>>) and class name.
     dao_class = "public class " + class_name + "DAO extends DAO<PK, " + class_name + "DTO, " + class_name + "> {\n"
-    # constructor.
-    dao_class += "\tpublic " + class_name + "DAO() {\n"
-    # constructor body. (super(<class_name>DTO.class, IM.getInstance().getIdentityMap(<class_name>.class));)
-    dao_class += "\t\tsuper(" + class_name + "DTO.class, IM.getInstance().getIdentityMap(" + class_name + ".class));\n"
-    dao_class += "\t}\n"
-    # convertDtoToBusiness method.
-    dao_class += "\t@Override\n"
-    # convertDtoToBusiness method body.
-    dao_class += "\tprotected " + class_name + " convertDtoToBusiness(" + class_name + "DTO dto) {\n"
-    dao_class += "\t\treturn new " + class_name + "("
-    for field in class_fields:
-        dao_class += "(" + identityFunctionIfNotInDict(field[0]) + ") dto.get" + p.a_capitalize(field[1]) + "(), "
-    dao_class = dao_class[:-2] + ");\n"
-    dao_class += "\t}\n"
-    # convertBusinessToDto method.
-    dao_class += "\t@Override\n"
-    # convertBusinessToDto method body.
-    dao_class += "\tprotected " + class_name + "DTO convertBusinessToDto(" + class_name + " business) {\n"
-    dao_class += "\t\treturn new " + class_name + "DTO("
-    for field in class_fields:
-        dao_class += "business.get" + p.a_capitalize(field[1]) + "(), "
-    dao_class = dao_class[:-2] + ");\n"
-    dao_class += "\t}\n"
+    # class fields.
+    dao_class += gg.define_class_fields(class_name, class_fields)
+    # class constructor.
+    dao_class += define_dao_constructor(class_name, class_fields)
+    # convertDtoToBusiness method. (override)
+    dao_class += define_dao_convert_dto_to_business(class_name, class_fields)
+    # convertBusinessToDto method. (override)
+    dao_class += define_dao_convert_business_to_dto(class_name, class_fields)
     # createDTO method. (override)
-    dao_class += "\t@Override\n"
-    # createDTO method body.
-    dao_class += "\tprotected " + class_name + "DTO createDTO(List<Object> listFields) {\n"
-    dao_class += "\t\treturn new " + class_name + "DTO("
-    for field in class_fields:
-        dao_class += "(" + field[0] + ") listFields.get(" + str(class_fields.index(field)) + "), "
-    dao_class = dao_class[:-2] + ");\n"
-    dao_class += "\t}\n"
+    dao_class += define_dao_create_dto(class_name, class_fields)
+    # special methods. for dao classes. for all fields[type, name]
+    # public List<name> getAll<name>s(<fk_field_type1> <fk_field_name1>, ..., <fk_field_typeN> <fk_field_nameN>){
+    #     return {daoName}.selectAllUnderConditionToBusiness("{tblField} = " + {fkField.replace('"', "")});
+    # }
+    dao_class += define_dao_special_methods(class_name, class_fields, fk_class_fields)
+    # class footer.
     dao_class += "}\n"
     return packages + "\n\n" + dao_class
+
+
+def define_dao_special_methods(class_name, class_fields, fk_class_fields):
+    """
+        Generates a DAO special methods given a class name and a list of fields.
+        :param class_name: name of the class
+        :param class_fields: class fields
+        :param fk_class_fields: foreign key fields
+        :return: DAO special methods
+        """
+    # fields in fk_class_fields are like this, [fieldType ,tblName, tblField, fkField]
+    # special methods. for dao classes. for all fields[type, name]
+    # public List<name> getAll<name>s(<fk_field_type1> <fk_field_name1>, ..., <fk_field_typeN> <fk_field_nameN>){
+    #     return {daoName}.selectAllUnderConditionToBusiness("{tblField} = " + {fkField.replace('"', "")});
+    # }
+    special_methods = ""
+    for field in fk_class_fields:
+        special_methods += "public List<" + field + "> getAll" + field + "s("
+        for field_type, fk_field, tbl_name, tbl_field in fk_class_fields[field]:
+            special_methods += identityFunctionIfNotInDict(field_type) + " " + fk_field + ", "
+        special_methods = special_methods[:-2] + "){\n"
+        special_methods += "    return " + tbl_name + "DAO.selectAllUnderConditionToBusiness("
+        for field_type, fk_field, tbl_name, tbl_field in fk_class_fields[field]:
+            if field_type == "String":
+                special_methods += '"' + tbl_field + ' = "' + " + '" + fk_field + "' + " + '" AND " + '
+            else:
+                special_methods += '"' + tbl_field + ' = "' + " + " + fk_field + " + " + '" AND " + '
+        special_methods = special_methods[:-13] + ");\n\n"
+        special_methods += "}\n"
+    return special_methods
+
+
+def define_dao_imports(class_name, class_fields):
+    """
+        Generates a DAO imports given a class name and a list of fields.
+        :param class_name: name of the class
+        :param class_fields: class fields
+        :return: DAO imports
+        """
+    # imports.
+    imports = "import DataAccess.DTOs." + class_name + "DTO;\n"
+    imports += "import DataAccess.IdentityMap.IM;\n"
+    imports += "import DataAccess.PrimaryKeys.PK;\n"
+    imports += "import Logic." + class_name + ";\n"
+    imports += "import java.util.List;\n"
+    for field in class_fields:
+        imports += "import DataAccess.DAOs." + field[0] + ";\n"
+    return imports
+
+
+def define_dao_create_dto(class_name, class_fields):
+    """
+        Generates a DAO createDTO method given a class name and a list of fields.
+        :param class_name: name of the class
+        :param class_fields: class fields
+        :return: DAO createDTO method
+        """
+    # createDTO method. (override)
+    create_dto = "\t@Override\n"
+    # createDTO method body.
+    create_dto += "\tprotected " + class_name + "DTO createDTO(List<Object> listFields) {\n"
+    create_dto += "\t\treturn new " + class_name + "DTO("
+    for field in class_fields:
+        create_dto += "(" + field[0] + ") listFields.get(" + str(class_fields.index(field)) + "), "
+    create_dto = create_dto[:-2] + ");\n"
+    create_dto += "\t}\n"
+    return create_dto
+
+
+def define_dao_convert_business_to_dto(class_name, class_fields):
+    """
+        Generates a DAO convertBusinessToDto method given a class name and a list of fields.
+        :param class_name: name of the class
+        :param class_fields: class fields
+        :return: DAO convertBusinessToDto method
+        """
+    # convertBusinessToDto method.
+    convert_business_to_dto = "\t@Override\n"
+    # convertBusinessToDto method body.
+    convert_business_to_dto += "\tprotected " + class_name + "DTO convertBusinessToDto(" + class_name + " business) {\n"
+    convert_business_to_dto += "\t\treturn new " + class_name + "DTO("
+    for field in class_fields:
+        convert_business_to_dto += "business.get" + p.a_capitalize(field[1]) + "(), "
+    convert_business_to_dto = convert_business_to_dto[:-2] + ");\n"
+    convert_business_to_dto += "\t}\n"
+    return convert_business_to_dto
+
+
+def define_dao_convert_dto_to_business(class_name, class_fields):
+    """
+        Defines the convertDtoToBusiness method.
+    :param class_name: string, name of the class
+    :param class_fields: List of tuples, class fields
+    :return: the convertDtoToBusiness method
+    """
+    dao_convert_dto_to_business = "\t@Override\n"
+    dao_convert_dto_to_business += "\tprotected " + class_name + " convertDtoToBusiness(" + class_name + "DTO dto) {\n"
+    dao_convert_dto_to_business += "\t\treturn new " + class_name + "("
+    for field in class_fields:
+        dao_convert_dto_to_business += "(" + identityFunctionIfNotInDict(field[0]) + ") dto.get" + p.a_capitalize(
+            field[1]) + "(), "
+    dao_convert_dto_to_business = dao_convert_dto_to_business[:-2] + ");\n"
+    dao_convert_dto_to_business += "\t}\n"
+    return dao_convert_dto_to_business
+
+
+"""this method generates a DAO constructor given a class name and a list of fields."""
+
+
+def define_dao_constructor(class_name, class_fields):
+    """
+        Generates a DAO constructor given a class name and a list of fields.
+        :param class_name: name of the class
+        :param class_fields: class fields
+        :return: DAO constructor
+        """
+    # constructor.
+    add_to_constructor = "\t\tsuper(" + class_name + "DTO.class, IM.getInstance().getIdentityMap(" + class_name + ".class));\n"
+    return gg.define_class_constructor(class_name + "DAO", class_fields,
+                                       added_super_constructor_code=add_to_constructor)
 
 
 """fields in the class looks like this, private <final>(optional) <type> <name>; the last one is the field name
@@ -123,89 +224,50 @@ def get_class_fields(class_code, class_name):
     return fields
 
 
-def create_dao_classes(fD):
+def generate_new_fk_dict(fD, fkD):
+    new_fk_dict = {}
+    new_f_dict = {}
+    for key in fkD:
+        new_f_dict[key] = []
+        new_fk_dict[key] = {}
+        for tbl_name, tbl_field, fk_field in fkD[key]:
+            if tbl_name not in new_fk_dict[key].keys():
+                new_fk_dict[key][tbl_name] = []
+            new_fk_dict[key][tbl_name].append(
+                [p.getFieldInTableType(tbl_field, fD, tbl_name), fk_field.replace('"', ''), tbl_name, tbl_field])
+            tbl_name_dao, tbl_name_dao_capitalized = tbl_name + "DAO", p.a_capitalize(tbl_name) + "DAO"
+            if [tbl_name_dao, tbl_name_dao_capitalized] not in new_f_dict[key]:
+                new_f_dict[key].append([tbl_name_dao, tbl_name_dao_capitalized])
+    return new_f_dict, new_fk_dict
+
+
+"""nD = fkDict[name]
+    args1 = ""
+    addedFields = {}
+    addedMethods = {}
+    for tblName, tblField, fkField in nD:
+        daoName = f"{a_de_capitalize(tblName)}DAO"
+        args1 += f'    private {tblName}DAO {daoName};\n\n'
+        addedFields[f'{tblName}DAO'] = daoName
+        addedMethods[
+            f'{tblName}DAO'] = f'''    public List<{tblName}> getMatching{tblName}({getFieldInTableType(tblField, fDict, tblName)} {fkField.replace('"', "")}){clo}
+        return {daoName}.selectAllUnderConditionToBusiness("{tblField} = " + {fkField.replace('"', "")});
+    {clc}\n\n'''
+    return [args1, addedFields, addedMethods]"""
+
+
+def create_dao_classes(fD, fkD=""):
+    """
+        Generates the DAO classes.
+    :param fD: dictionary of fields, key is the class name, value is a list of fields
+    :param fkD: dictionary of foreign keys, key is the class name, value is a list of foreign keys
+    :return: save the generated classes to a file
+    """
+    # fields in fkDict are like this, [fieldType ,tblName, tblField, fkField]
+    new_f_dict, new_fk_dict = generate_new_fk_dict(fD, fkD)
     ap = os.getcwd() + "\\DAOFiles" if p.pathToDal == "1" else p.pathToDal + "\\DAOs"
     p.createDirectoryIfNotExist(ap)
     for class_name in fD.keys():
-        fin = generate_dao_class_given_class_name_and_class_fields(class_name, fD[class_name])
+        fin = generate_dao_class_given_class_name_and_class_fields(class_name, new_f_dict[class_name],
+                                                                   new_fk_dict[class_name])
         open(f'{ap}\\{class_name + "DAO.java"}', "w").write(IndentJavaFile.indentJavaFile(fin))
-
-
-if __name__ == '__main__':
-    s = """package DataAccess.DTOs;
-import DataAccess.PrimaryKeys.PK;
-import java.lang.reflect.Field;
-public class AssignmentDTO extends DTO<PK>{
-    private String date;
-    private String shiftTime;
-    private String branch;
-    private String job;
-    private long capacity;
-    private long quantity;
-    public AssignmentDTO(String date, String shiftTime, String branch, String job, long capacity, long quantity){
-        super(new PK(getFields(), date, shiftTime, branch, job));
-        this.date = date;
-        this.shiftTime = shiftTime;
-        this.branch = branch;
-        this.job = job;
-        this.capacity = capacity;
-        this.quantity = quantity;
-    }
-    public static Field[] getFields(){ return getFields(new String[]{"date", "shiftTime", "branch", "job"}, AssignmentDTO.class);}
-    
-    public static PK getPK(String date, String shiftTime, String branch, String job){ return new PK(getFields(), date,  shiftTime,  branch,  job);}
-    
-    public String getDate(){
-        return date;
-    }
-    public void setDate(String date){
-        this.date = date;
-    }
-    public String getShiftTime(){
-        return shiftTime;
-    }
-    public void setShiftTime(String shiftTime){
-        this.shiftTime = shiftTime;
-    }
-    public String getBranch(){
-        return branch;
-    }
-    public void setBranch(String branch){
-        this.branch = branch;
-    }
-    public String getJob(){
-        return job;
-    }
-    public void setJob(String job){
-        this.job = job;
-    }
-    public long getCapacity(){
-        return capacity;
-    }
-    public void setCapacity(long capacity){
-        this.capacity = capacity;
-    }
-    public long getQuantity(){
-        return quantity;
-    }
-    public void setQuantity(long quantity){
-        this.quantity = quantity;
-    }
-    public String toString(){
-        return "Assignment{"
-        "date = [" + date + "]" +
-        "shiftTime = [" + shiftTime + "]" +
-        "branch = [" + branch + "]" +
-        "job = [" + job + "]" +
-        "capacity = [" + capacity + "]" +
-        "quantity = [" + quantity + "]" +
-        "}";
-    }
-    @Override
-    public Object[] getValues() {return new Object[]{date, shiftTime, branch, job, capacity, quantity};}
-}
-
-
-"""
-    fields = get_class_fields(s.split("\n"), "AssignmentDTO")
-    print(generate_dao_class_given_class_name_and_class_fields("Assignment", fields))

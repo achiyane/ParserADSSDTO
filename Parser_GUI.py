@@ -26,6 +26,7 @@ def generate_classes_by_path(root, what_to_generate="All"):
     p.pathToSrc = open(src_path_text).read().strip()
     fD = p.getFieldDict()
     pkD = p.getPKDict()
+    fkD = p.getFKDict()
     pkDTypes = {}
     for i in pkD:
         pkDTypes[i] = []
@@ -38,13 +39,13 @@ def generate_classes_by_path(root, what_to_generate="All"):
     elif what_to_generate == "Business":
         BusinessGenerator.create_business_classes(fD)
     elif what_to_generate == "DAO":
-        DAOGenerator.create_dao_classes(fD)
+        DAOGenerator.create_dao_classes(fD, fkD)
     elif what_to_generate == "DTO":
         DTOGenerator.create_dto_classes(fD, pkDTypes)
     elif what_to_generate == "All":
         ServiceGenerator.create_service_classes(fD)
         BusinessGenerator.create_business_classes(fD)
-        DAOGenerator.create_dao_classes(fD)
+        DAOGenerator.create_dao_classes(fD, fkD)
         DTOGenerator.create_dto_classes(fD, pkDTypes)
 
 
@@ -87,6 +88,7 @@ def generate_classes(root, what_to_generate="All"):
             exit()"""
         fD = p.getFieldDict()
         pkD = p.getPKDict()
+        fkD = p.getFKDict()
         pkDTypes = {}
         for i in pkD:
             pkDTypes[i] = []
@@ -99,13 +101,13 @@ def generate_classes(root, what_to_generate="All"):
         elif what_to_generate == "Business":
             BusinessGenerator.create_business_classes(fD)
         elif what_to_generate == "DAO":
-            DAOGenerator.create_dao_classes(fD)
+            DAOGenerator.create_dao_classes(fD, fkD)
         elif what_to_generate == "DTO":
             DTOGenerator.create_dto_classes(fD, pkDTypes)
         elif what_to_generate == "All":
             ServiceGenerator.create_service_classes(fD)
             BusinessGenerator.create_business_classes(fD)
-            DAOGenerator.create_dao_classes(fD)
+            DAOGenerator.create_dao_classes(fD, fkD)
             DTOGenerator.create_dto_classes(fD, pkDTypes)
     elif test:
         p.PathToDB = "1"
