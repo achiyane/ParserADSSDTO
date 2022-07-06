@@ -91,7 +91,7 @@ def generate_business_class_given_class_name_and_class_fields(class_name, class_
     import DataAccess.DAOs.<class_name>DAO;
     import DataAccess.DTOs.<class_name>DTO;\n\n""".replace("<class_name>", class_name)
     extended_class_fields = class_fields.copy()
-    extended_class_fields.append((class_name + "DAO", p.a_de_capitalize(class_name) + "DAO"))
+    extended_class_fields.append((class_name + "DAO", p.de_capitalize_first_letter(class_name) + "DAO"))
     business_class = ""
     # business class header is added to the Business class
     business_class += "public class " + class_name + " {\n"
@@ -115,13 +115,12 @@ def generate_business_class_given_class_name_and_class_fields(class_name, class_
 
 
 def added_to_setters(class_name, class_field):
-    return "        this." + p.a_de_capitalize(class_name) + "DAO.update(this);\n"
+    return "        this." + p.de_capitalize_first_letter(class_name) + "DAO.update(this);\n"
 
 
 def create_business_classes(field_dict):
     fD = modify_field_dict_according_to_dict_type_conversion(field_dict)
-    ap = os.getcwd() + "\\BusinessFiles" if p.pathToSrc == "0" else p.pathToSrc + "\\Logic"
-    print(ap)
+    ap = os.getcwd() + "\\BusinessFiles" if p.pathToSrc == "default path" else p.path_to_src_components[p.LOGIC]
     p.createDirectoryIfNotExist(ap)
     for class_name in fD.keys():
         fin = generate_business_class_given_class_name_and_class_fields(class_name, fD[class_name])

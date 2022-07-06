@@ -167,7 +167,7 @@ def define_dao_convert_business_to_dto(class_name, class_fields):
     convert_business_to_dto += "\tprotected " + class_name + "DTO convertBusinessToDto(" + class_name + " business) {\n"
     convert_business_to_dto += "\t\treturn new " + class_name + "DTO("
     for field in class_fields:
-        convert_business_to_dto += "business.get" + p.a_capitalize(field[1]) + "(), "
+        convert_business_to_dto += "business.get" + p.capitalize_first_letter(field[1]) + "(), "
     convert_business_to_dto = convert_business_to_dto[:-2] + ");\n"
     convert_business_to_dto += "\t}\n"
     return convert_business_to_dto
@@ -184,7 +184,8 @@ def define_dao_convert_dto_to_business(class_name, class_fields):
     dao_convert_dto_to_business += "\tprotected " + class_name + " convertDtoToBusiness(" + class_name + "DTO dto) {\n"
     dao_convert_dto_to_business += "\t\treturn new " + class_name + "("
     for field in class_fields:
-        dao_convert_dto_to_business += "(" + identityFunctionIfNotInDict(field[0]) + ") dto.get" + p.a_capitalize(
+        dao_convert_dto_to_business += "(" + identityFunctionIfNotInDict(
+            field[0]) + ") dto.get" + p.capitalize_first_letter(
             field[1]) + "(), "
     dao_convert_dto_to_business = dao_convert_dto_to_business[:-2] + ");\n"
     dao_convert_dto_to_business += "\t}\n"
@@ -235,28 +236,13 @@ def generate_new_fk_dict(fD, fkD):
                 new_fk_dict[key][tbl_name] = []
             new_fk_dict[key][tbl_name].append(
                 [p.getFieldInTableType(tbl_field, fD, tbl_name), fk_field.replace('"', ''), tbl_name, tbl_field])
-            tbl_name_dao, tbl_name_dao_capitalized = tbl_name + "DAO", p.a_capitalize(tbl_name) + "DAO"
+            tbl_name_dao, tbl_name_dao_capitalized = tbl_name + "DAO", p.capitalize_first_letter(tbl_name) + "DAO"
             if [tbl_name_dao, tbl_name_dao_capitalized] not in new_f_dict[key]:
                 new_f_dict[key].append([tbl_name_dao, tbl_name_dao_capitalized])
     return new_f_dict, new_fk_dict
 
 
-"""nD = fkDict[name]
-    args1 = ""
-    addedFields = {}
-    addedMethods = {}
-    for tblName, tblField, fkField in nD:
-        daoName = f"{a_de_capitalize(tblName)}DAO"
-        args1 += f'    private {tblName}DAO {daoName};\n\n'
-        addedFields[f'{tblName}DAO'] = daoName
-        addedMethods[
-            f'{tblName}DAO'] = f'''    public List<{tblName}> getMatching{tblName}({getFieldInTableType(tblField, fDict, tblName)} {fkField.replace('"', "")}){clo}
-        return {daoName}.selectAllUnderConditionToBusiness("{tblField} = " + {fkField.replace('"', "")});
-    {clc}\n\n'''
-    return [args1, addedFields, addedMethods]"""
-
-
-def create_dao_classes(fD, fkD=""):
+def create_dao_classes(fD, fkD=None):
     """
         Generates the DAO classes.
     :param fD: dictionary of fields, key is the class name, value is a list of fields
@@ -264,8 +250,10 @@ def create_dao_classes(fD, fkD=""):
     :return: save the generated classes to a file
     """
     # fields in fkDict are like this, [fieldType ,tblName, tblField, fkField]
+    if fkD is None:
+        fkD = {}
     new_f_dict, new_fk_dict = generate_new_fk_dict(fD, fkD)
-    ap = os.getcwd() + "\\DAOFiles" if p.pathToDal == "1" else p.pathToDal + "\\DAOs"
+    ap = os.getcwd() + "\\DAOFiles" if p.pathToSrc == "default path" else p.path_to_src_components[p.DAOs]
     p.createDirectoryIfNotExist(ap)
     for class_name in fD.keys():
         fin = generate_dao_class_given_class_name_and_class_fields(class_name, new_f_dict[class_name],

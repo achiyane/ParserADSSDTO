@@ -60,10 +60,10 @@ def define_class_getters_setters(class_name, class_fields, added_code_to_getters
     """
     getters_setters = ""
     for field in class_fields:
-        getters_setters += "public " + field[0] + " get" + capitalize_first_letter(field[1]) + "() {\n"
+        getters_setters += "public " + field[0] + " get" + p.capitalize_first_letter(field[1]) + "() {\n"
         getters_setters += "        return " + field[1] + ";\n" + added_code_to_getters(field[1])
         getters_setters += "    }\n"
-        getters_setters += "    public void set" + capitalize_first_letter(field[1]) + "(" + field[0] + " " + field[
+        getters_setters += "    public void set" + p.capitalize_first_letter(field[1]) + "(" + field[0] + " " + field[
             1] + ") {\n"
         getters_setters += "        this." + field[1] + " = " + field[1] + ";\n" + added_code_to_setters(field[1])
         getters_setters += "    }\n"
@@ -87,7 +87,8 @@ def define_class_equals(class_name, class_fields):
     """
     equals = "    @Override\n    public boolean equals(Object o) {\n        if (this == o) return true;\n        if (!(o instanceof " + class_name + ")) return false;\n        " + class_name + " that = (" + class_name + ") o;\n return "
     for field in class_fields:
-        equals += "Object.equals(get" + capitalize_first_letter(field[1]) + "(), (that.get" + capitalize_first_letter(
+        equals += "Object.equals(get" + p.capitalize_first_letter(
+            field[1]) + "(), (that.get" + p.capitalize_first_letter(
             field[1]) + "())) && "
     equals = equals[:-4] + ";\n    }\n"
     return equals
@@ -109,7 +110,7 @@ def define_class_hashCode(class_name, class_fields):
     """
     hashCode = "    @Override\n    public int hashCode() {\n        return Objects.hash("
     for field in class_fields:
-        hashCode += "get" + capitalize_first_letter(field[1]) + "(), "
+        hashCode += "get" + p.capitalize_first_letter(field[1]) + "(), "
     hashCode = hashCode[:-2] + ");\n    }\n"
     return hashCode
 
@@ -127,14 +128,3 @@ def define_class_toString(class_name, class_fields):
     toString = toString[:-6] + ' " + \n"}";\n'
     toString += "}\n"
     return toString
-
-
-def capitalize_first_letter(string):
-    """
-    this method is to capitalize the first letter of a string
-    :param string: string, the string to capitalize the first letter
-    :return: the string with the first letter capitalized
-    """
-    if len(string) > 0:
-        return string[0].upper() + string[1:]
-    return string

@@ -204,7 +204,7 @@ def define_dto_get_values(class_name, dto_fields):
 
 
 def create_dto_classes(fD, pkD):
-    ap = os.getcwd() + "\\DTOFiles" if p.pathToDal == "1" else p.pathToDal + "\\DTOs"
+    ap = os.getcwd() + "\\DTOFiles" if p.pathToSrc == "default path" else p.path_to_src_components[p.DTOs]
     p.createDirectoryIfNotExist(ap)
     for class_name in fD.keys():
         fin = generate_dto_by_class_name_fields_and_pk_fields(class_name, fD[class_name], pkD[class_name])

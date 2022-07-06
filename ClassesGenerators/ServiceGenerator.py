@@ -121,9 +121,10 @@ def define_service_to_string(class_name, service_fields):
 
 def define_service_second_constructor(class_name, service_fields):
     service_str = "public S" + class_name + "(" + class_name + " business) {\n"
-    service_str += "this." + service_fields[0][1] + " = business.get" + p.a_capitalize(service_fields[0][1]) + "();\n"
+    service_str += "this." + service_fields[0][1] + " = business.get" + p.capitalize_first_letter(
+        service_fields[0][1]) + "();\n"
     for i in range(1, len(service_fields)):
-        service_str += "this." + service_fields[i][1] + " = business.get" + p.a_capitalize(
+        service_str += "this." + service_fields[i][1] + " = business.get" + p.capitalize_first_letter(
             service_fields[i][1]) + "();\n"
     service_str += "}\n"
     return service_str
@@ -131,7 +132,8 @@ def define_service_second_constructor(class_name, service_fields):
 
 def create_service_classes(field_dict):
     fD = modify_field_dict_according_to_dict_type_conversion(field_dict)
-    ap = os.getcwd() + "\\ServiceFiles" if p.pathToSrc == "0" else p.pathToSrc + "\\Service\\Objects"
+    ap = os.getcwd() + "\\ServiceFiles" if p.pathToSrc == "default path" else p.path_to_src_components[
+        p.SERVICE_OBJECTS]
     p.createDirectoryIfNotExist(ap)
     for class_name in fD.keys():
         fin = generate_service_class_given_class_name_and_class_fields(class_name, fD[class_name])

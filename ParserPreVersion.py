@@ -2,7 +2,7 @@
 
 # Press Shift+F10 to execute it or replace it with your code.
 # Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
-import glob
+''' import glob
 import os
 import sqlite3
 
@@ -988,6 +988,6 @@ if __name__ == '__main__':
         createDAOFiles()
         createBusinessFiles()
         createServiceFiles()
-        createDTOFiles()
+        createDTOFiles()'''
 
 # See PyCharm help at https:\\\\www.jetbrains.com\\help\\pycharm
