@@ -27,8 +27,3 @@ def create_dir_if_not_exist(path: str):
     if not os.path.exists(path):
         os.makedirs(path)
     return path
-
-
-if __name__ == '__main__':
-    print(findPath(["DataAccess", "Logic", "PresentationLayer", "ServiceLayer"],
-                   'C:\\Users\\achiy\\ADSS-Projects\\git\\superlee\\dev\\src'))

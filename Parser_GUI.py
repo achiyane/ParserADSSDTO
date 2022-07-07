@@ -3,7 +3,7 @@ from tkinter import *
 from tkinter import filedialog
 
 import Parser as p
-from ClassesGenerators import ServiceGenerator, BusinessGenerator, DAOGenerator, DTOGenerator, GenericGenerator
+from ClassesGenerators import ServiceGenerator, BusinessGenerator, DAOGenerator, DTOGenerator, CLIGenerator
 from FilesHandlers import PathFinder
 
 """this is the main window of the program
@@ -67,10 +67,30 @@ def choose_path(text_box, path_text):
         p.pathToDB = text
 
 
+def generate_cli(root):
+    print("Generating CLI...")
+    pathsFiles = os.getcwd() + "\\PathFiles"
+    p.createDirectoryIfNotExist(pathsFiles)
+    CLIGenerator.create_cli_class(p.pathToFacade)
+    print("Generating CLI... Done!")
+
+
+def help_window(root, menu):
+    """create the help window. explain usage in the system"""
+    help_window = Label(root, text="""default path of the src is the working directory path
+    when you insert the regular path, it will look for your packages called DataAccess, Logic, PresentationLayer, Service, DTOs, DAOs, Service\Objects
+    if you want to change the path, you can insert the path in the text box and press the button
+    if you want to generate the classes, you can choose the classes you want to generate in the menu in the top left corner
+    if you want to generate the CLI, you can press the button in the menu in the top left corner
+    """, font=("Arial", 10))
+    help_window.pack()
+    help_window.place(x=20, y=120)
+
+
 def main():
     root = Tk()
-    root.title("Parser GUI")
-    root.geometry("1000x500")
+    root.title("Classes Generator GUI")
+    root.geometry("1300x500")
     """the main frame
     the main menu, in it we have a button for generating the service, business, dto and dao classes
     we have a text box for the path to the src folder
@@ -83,29 +103,41 @@ def main():
     main_frame = Frame(root)
     main_frame.pack()
     main_menu = Menu(root)
-    root.config(menu=main_menu)
+    root.config(menu=main_menu, borderwidth=2, highlightthickness=2)
     file_menu = Menu(main_menu)
     pathsFiles = os.getcwd() + "\\PathFiles"
     src_path_text = pathsFiles + "\\srcPath.txt"
     db_path_text = pathsFiles + "\\dbPath.txt"
+    facade_path_text = pathsFiles + "\\facadePath.txt"
     p.PathToDB = open(db_path_text).read().strip()
-    main_menu.add_cascade(label="File", menu=file_menu)
+    p.pathToFacade = open(facade_path_text).read().strip()
+    main_menu.add_cascade(label="Menu", menu=file_menu)
     file_menu.add_command(label="Generate Service", command=lambda: generate_classes(root, "Service"))
     file_menu.add_command(label="Generate Business", command=lambda: generate_classes(root, "Business"))
     file_menu.add_command(label="Generate DTO", command=lambda: generate_classes(root, "DTO"))
     file_menu.add_command(label="Generate DAO", command=lambda: generate_classes(root, "DAO"))
     file_menu.add_command(label="Generate All", command=lambda: generate_classes(root, "All"))
+    file_menu.add_command(label="Generate CLI", command=lambda: generate_cli(root))
     file_menu.add_command(label="Exit", command=root.destroy)
     """ add the text boxes and buttons """
-    path_to_src_box = create_text_box(root, open(src_path_text).read(), 10, 10, 60, 20)
-    path_to_db_box = create_text_box(root, open(db_path_text).read(), 10, 40, 60, 20)
+    width = 140
+    path_to_src_box = create_text_box(root, open(src_path_text).read(), 10, 10, width, 20)
+    path_to_db_box = create_text_box(root, open(db_path_text).read(), 10, 40, width, 20)
+    path_to_facade_box = create_text_box(root, open(facade_path_text).read(), 10, 70, width, 20)
     """ add the buttons for choosing the path """
+    x_size, y_size = 1140, 10
     choose_src_path = Button(root, text="Choose src path",
                              command=lambda: choose_path(path_to_src_box, "\\PathFiles\\srcPath.txt"))
-    choose_src_path.place(x=500, y=10)
+    choose_src_path.place(x=x_size, y=y_size)
     choose_db_path = Button(root, text="Choose db path",
                             command=lambda: choose_path(path_to_db_box, "\\PathFiles\\dbPath.txt"))
-    choose_db_path.place(x=500, y=40)
+    choose_db_path.place(x=x_size, y=y_size + 30)
+    choose_facade_path = Button(root, text="Choose facade path",
+                                command=lambda: choose_path(path_to_facade_box, "\\PathFiles\\facadePath.txt"))
+    choose_facade_path.place(x=x_size, y=y_size + 60)
+    # help button for the user to know how to use the program
+    help_button = Button(root, text="Help", command=lambda: help_window(root, main_menu))
+    help_button.place(x=x_size, y=y_size + 90)
     root.mainloop()
 
 

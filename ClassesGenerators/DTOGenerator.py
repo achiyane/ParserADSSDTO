@@ -209,12 +209,3 @@ def create_dto_classes(fD, pkD):
     for class_name in fD.keys():
         fin = generate_dto_by_class_name_fields_and_pk_fields(class_name, fD[class_name], pkD[class_name])
         open(f'{ap}\\{class_name + "DTO.java"}', "w").write(IndentJavaFile.indentJavaFile(fin))
-
-
-if __name__ == '__main__':
-    class_name = "User"
-    dto_fields = [["String", "username"], ["String", "password"], ["String", "email"], ["String", "firstName"],
-                  ["String", "lastName"], ["String", "phone"], ["String", "address"], ["String", "city"],
-                  ["String", "state"], ["String", "zip"], ["String", "country"], ["String", "birthday"]]
-    dto_pk_fields = [["String", "username"], ["String", "password"], ["String", "email"]]
-    print(generate_dto_by_class_name_fields_and_pk_fields(class_name, dto_fields, dto_pk_fields))

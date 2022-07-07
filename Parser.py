@@ -10,6 +10,7 @@ PathToDB = "default path"
 clo = "{"
 clc = "}"
 pathToSrc = "default path"
+pathToFacade = "default path"
 DATA_ACCESS, LOGIC, PRESENTATION, SERVICE, DTOs, DAOs, SERVICE_OBJECTS = range(7)
 path_to_src_components = ["default path", "default path", "default path", "default path", "default path",
                           "default path", "default path"]

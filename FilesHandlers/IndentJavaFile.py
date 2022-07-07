@@ -91,10 +91,3 @@ def indentJavaFile(lines: str):
 
 def join_all_lines(file: list[str]):
     return "\n".join(file)
-
-
-if __name__ == '__main__':
-    print("Enter the java file:")
-    lines = input()
-    print(indentJavaFile(lines))
-    print("Done")

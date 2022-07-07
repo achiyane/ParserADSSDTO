@@ -148,11 +148,3 @@ def modify_field_dict_according_to_dict_type_conversion(field_dict):
             field_type, field_name = field_dict[key][i]
             new_field_dict[key].append([identityFunctionIfNotInDict(field_type), field_name])
     return new_field_dict
-
-
-if __name__ == '__main__':
-    class_name = "User"
-    dto_fields = [["String", "username"], ["String", "password"], ["String", "email"], ["String", "firstName"],
-                  ["String", "lastName"], ["String", "phone"], ["String", "address"], ["String", "city"],
-                  ["String", "state"], ["String", "zip"], ["String", "country"], ["String", "birthday"]]
-    print(generate_service_class_given_class_name_and_class_fields(class_name, dto_fields))

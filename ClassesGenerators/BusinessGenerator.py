@@ -135,9 +135,3 @@ def modify_field_dict_according_to_dict_type_conversion(field_dict):
             field_type, field_name = field_dict[key][i]
             new_field_dict[key].append([identityFunctionIfNotInDict(field_type), field_name])
     return new_field_dict
-
-
-if __name__ == '__main__':
-    class_name = "User"
-    class_fields = [("String", "username"), ("String", "password"), ("String", "email")]
-    print(generate_business_class_given_class_name_and_class_fields(class_name, class_fields))
