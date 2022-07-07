@@ -1,6 +1,6 @@
 import os
 from tkinter import *
-from tkinter import filedialog
+from tkinter import filedialog, messagebox
 
 import Parser as p
 from ClassesGenerators import ServiceGenerator, BusinessGenerator, DAOGenerator, DTOGenerator, CLIGenerator
@@ -142,4 +142,12 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    try:
+        main()
+    except Exception as e:
+        print(e)
+        print("Error in the program, please try again")
+        msg = """make sure the db DDLs is in the correct format"""
+        # gui window message for the user desplaying msg
+        messagebox.showinfo("Error", msg)
+        exit()
