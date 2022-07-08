@@ -154,7 +154,11 @@ def define_class_method_with_handle_service_request(cli_class_name, method_name,
     method_code += "        Parser.getUserInputParams("
     new_code = ""
     for parameter in method_parameter_list:
-        new_code += "makeSupplier(next" + p.capitalize_first_letter(parameter[0]) + "(\"" + parameter[1] + "\")),\n"
+        if "List<" in parameter[0]:
+            new_code += "makeSupplier(ScannerStream::getListInput(\"insert your supplier here\")),\n"
+        else:
+            new_code += "makeSupplier(ScannerStream::next" + p.capitalize_first_letter(parameter[0]) + "(\"" + \
+                        parameter[1] + "\")),\n"
     if new_code != "":
         new_code = new_code[:-2] + "));\n"
     else:

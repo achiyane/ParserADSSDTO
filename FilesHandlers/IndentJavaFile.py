@@ -80,9 +80,10 @@ def indentJavaFile(lines: str):
             indent += line.count("{")
         elif line.startswith("}"):
             indent -= line.count("}")
-            lst.append("    " * indent + line)
+            lst.append("    " * indent + line + "\n")
         else:
-            lst.append("    " * indent + line)
+            if line.strip() != "":
+                lst.append("    " * indent + line)
     return join_all_lines(lst)
 
 
